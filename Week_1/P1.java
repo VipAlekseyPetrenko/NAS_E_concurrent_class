@@ -1,37 +1,33 @@
 class Foo {
 
-    private Object lock = new Object();
-    volatile private int currIndex = 1;
+    private Object lock;
+    private int currTurn;
+
+    private void printsWrapper(Runnable printFunction, int turn) throws InterruptedException {
+        synchronized(lock) {
+            while(currTurn != turn) {
+                lock.wait();
+            }
+            printFunction.run();
+            ++currTurn;
+            lock.notifyAll();
+        }
+    }
 
     public Foo() {
-        
+        this.lock = new Object();
+        this.currTurn = 1;
     }
 
     public void first(Runnable printFirst) throws InterruptedException {
-        synchronized(lock) {
-            printFirst.run();
-            ++currIndex;
-            lock.notifyAll();
-        }
+        printsWrapper(printFirst, 1);
     }
 
     public void second(Runnable printSecond) throws InterruptedException {
-        synchronized(lock) {
-            while(currIndex != 2) {
-                lock.wait();
-            }
-            printSecond.run();
-            ++currIndex;
-            lock.notifyAll();
-        }
+        printsWrapper(printSecond, 2);
     }
 
     public void third(Runnable printThird) throws InterruptedException {
-        synchronized(lock) {
-            while(currIndex != 3) {
-                lock.wait();
-            }
-            printThird.run();
-        }
+        printsWrapper(printThird, 3);
     }
 }
