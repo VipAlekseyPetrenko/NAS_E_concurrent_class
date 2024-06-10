@@ -1,7 +1,7 @@
 class Foo {
 
-    private Object lock;
-    private int currTurn;
+    private Object lock = new Object();
+    private int currTurn = 1;
 
     private void printsWrapper(Runnable printFunction, int turn) throws InterruptedException {
         synchronized(lock) {
@@ -15,8 +15,6 @@ class Foo {
     }
 
     public Foo() {
-        this.lock = new Object();
-        this.currTurn = 1;
     }
 
     public void first(Runnable printFirst) throws InterruptedException {
