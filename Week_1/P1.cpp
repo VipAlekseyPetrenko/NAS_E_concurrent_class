@@ -4,13 +4,21 @@ private:
     mutex gMutex;
     condition_variable gCv;
     int currTurn = 1;
+    bool isPrinting = false; 
 
     void printsWrapper(function<void()> printFunction, int turn) {
-        unique_lock<mutex> lock(gMutex);
-        gCv.wait(lock, [this, turn]{ return turn == currTurn; });
+        {
+            unique_lock<mutex> lock(gMutex);
+            gCv.wait(lock, [this, turn]{ return (turn == currTurn) && !isPrinting; });
+            isPrinting = true;
+        }
         printFunction();
-        ++currTurn;
-        gCv.notify_all();
+        {
+            unique_lock<mutex> lock(gMutex);
+            ++currTurn;
+            isPrinting = false;
+            gCv.notify_all();
+        }
     }
 
 public:
