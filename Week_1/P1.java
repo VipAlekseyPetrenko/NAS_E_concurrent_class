@@ -1,25 +1,21 @@
 class Foo {
-
-    private Object lock = new Object();
-    private int currTurn = 1;
-    Boolean isPrinting = false; 
+    int currTurn;
 
     private void printsWrapper(Runnable printFunction, int turn) throws InterruptedException {
-        synchronized(lock) {
-            while((turn != currTurn) && !isPrinting) {
-                lock.wait();
+        synchronized(this) {
+            while(turn != currTurn) {
+                wait();
             }
-            isPrinting = true;
         }
         printFunction.run();
-        synchronized(lock) {
-            ++currTurn;
-            isPrinting = false;
-            lock.notifyAll();
+        synchronized(this) {
+            currTurn += 1;
+            notifyAll();
         }
     }
 
     public Foo() {
+        this.currTurn = 1;
     }
 
     public void first(Runnable printFirst) throws InterruptedException {

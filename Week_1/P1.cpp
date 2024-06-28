@@ -2,27 +2,27 @@ class Foo {
 
 private:
     mutex gMutex;
-    condition_variable gCv;
-    int currTurn = 1;
-    bool isPrinting = false; 
+    condition_variable cv;
+    int currTurn;
 
     void printsWrapper(function<void()> printFunction, int turn) {
         {
-            unique_lock<mutex> lock(gMutex);
-            gCv.wait(lock, [this, turn]{ return (turn == currTurn) && !isPrinting; });
-            isPrinting = true;
-        }
-        printFunction();
-        {
-            unique_lock<mutex> lock(gMutex);
-            ++currTurn;
-            isPrinting = false;
-            gCv.notify_all();
+            {
+                unique_lock<mutex> lk(gMutex);
+                cv.wait(lk, [this, turn]{ return (turn == currTurn); });
+            }
+            printFunction();
+            {
+                unique_lock<mutex> lk(gMutex);
+                currTurn += 1;
+            }
+            cv.notify_all();
         }
     }
 
 public:
     Foo() {
+        this->currTurn = 1;
     }
 
     void first(function<void()> printFirst) {
